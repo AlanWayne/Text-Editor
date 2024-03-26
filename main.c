@@ -24,6 +24,7 @@ int main(int argc, char** argv) {
 	wrefresh(window_text_border.window);
 
 	int count_of_lines = count_char(argv[1], '\n');
+	int* count_of_chars = count_chars(argv[1], count_of_lines);
 	char** file_content = read_from_file(argv[1], count_of_lines);
 
 	int input_char = ' ';
@@ -45,10 +46,10 @@ int main(int argc, char** argv) {
 		}
 
 		if (movement(input_char, &cur_pos_y, &cur_pos_x, window_text,
-					 &screen_height, count_of_lines)) {
+					 &screen_height, count_of_lines, count_of_chars)) {
 			if (screen_height + cur_pos_y > count_of_lines) {
 				screen_height -= 1;
-				cur_pos_x = strlen(file_content[count_of_lines - 1] - 1);
+				cur_pos_x = count_of_chars[cur_pos_y + screen_height];
 			}
 
 			wclear(window_text.window);
@@ -58,34 +59,11 @@ int main(int argc, char** argv) {
 			}
 		}
 
-		// cur_pos_x =
-		// 	min(cur_pos_x, strlen(file_content[cur_pos_y + screen_height]) - 1);
+		// cur_pos_x = min(cur_pos_x, count_of_chars[cur_pos_y +
+		// screen_height]);
 
-		// FIX TABS IN STRLEN
-
-		// bool outside_line = true;
-		// for (int i = cur_pos_x; i < getmaxx(window_text.window); ++i) {
-		// 	if (mvwinch(window_text.window, cur_pos_y, i) != 32) {
-		// 		outside_line = false;
-		// 		break;
-		// 	}
-		// }
-
-		// if (outside_line) {
-		// 	if (input_char == 67 &&
-		// 		mvwinch(window_text.window, cur_pos_y, cur_pos_x - 1) == 32) {
-		// 		cur_pos_y += 1;
-		// 		cur_pos_x = 0;
-		// 	} else {
-		// 		while (mvwinch(window_text.window, cur_pos_y, cur_pos_x - 1) ==
-		// 				   32 &&
-		// 			   cur_pos_x > 0) {
-		// 			cur_pos_x -= 1;
-		// 		}
-		// 	}
-		// }
-
-		wmove(window_text.window, cur_pos_y, cur_pos_x);
+		wmove(window_text.window, cur_pos_y,
+			  min(cur_pos_x, count_of_chars[cur_pos_y + screen_height]));
 		wrefresh(window_text_border.window);
 	}
 
@@ -97,13 +75,10 @@ int main(int argc, char** argv) {
 		free(file_content[i]);
 	}
 	free(file_content);
+	free(count_of_chars);
 
 	printf("%d %d %d %d\n", screen_height, count_of_lines - window_text.height,
 		   count_of_lines, window_text.height);
 
 	return 0;
 }
-
-// mvwprintw(win_text_border, 0, getmaxx(win_text_border) - 17,
-// 				  " [ %02d %02d %03d ] ", cur_pos_x, cur_pos_y,
-// 				  mvwinch(win_text, cur_pos_y, cur_pos_x));

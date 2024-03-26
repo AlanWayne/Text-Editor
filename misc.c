@@ -1,15 +1,33 @@
 #include "texteditor.h"
 
+#define K_UP 65
+#define K_DOWN 66
+#define K_RIGHT 67
+#define K_LEFT 68
+
 bool movement(int input, int* y, int* x, WINDOW_OBJECT window_text, int* height,
-			  int lines) {
-	if (input == 65) *y -= 1;
-	if (input == 66) *y += 1;
-	if (input == 67) *x += 1;
-	if (input == 68) *x -= 1;
+			  int lines, int* chars) {
+	if (*x > chars[*y + *height] && (input == K_RIGHT || input == K_LEFT)) {
+		*x = chars[*y + *height];
+	}
+
+	if (input == K_UP) *y -= 1;
+	if (input == K_DOWN) *y += 1;
+	if (input == K_RIGHT) *x += 1;
+	if (input == K_LEFT) *x -= 1;
 
 	if (*x < 0) {
-		*x = window_text.width;
 		*y -= 1;
+		*x = chars[*y + *height];
+	}
+
+	if (*x > chars[*y + *height] && input == K_RIGHT) {
+		if (*y + *height < lines) {
+			*x = 0;
+			*y += 1;
+		} else {
+			*x -= 1;
+		}
 	}
 
 	if (*y < 0) {
@@ -52,6 +70,29 @@ int count_char(char* file_name, int ref) {
 	fclose(file);
 
 	return count_of_lines;
+}
+
+int* count_chars(char* file_name, int lines) {
+	FILE* file = fopen(file_name, "r");
+	int* count_of_chars = (int*)calloc(lines, sizeof(int));
+	int ch = ' ';
+	int i = 0;
+
+	while ((ch = fgetc(file)) != EOF) {
+		if (ch != '\n') {
+			count_of_chars[i] += 1;
+
+			if (ch == 9) {
+				count_of_chars[i] += 7;
+			}
+		} else {
+			i += 1;
+		}
+	}
+
+	fclose(file);
+
+	return count_of_chars;
 }
 
 char** read_from_file(char* file_name, int count_of_lines) {
