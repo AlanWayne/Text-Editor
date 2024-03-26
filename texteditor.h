@@ -12,7 +12,7 @@ typedef struct WINDOW_OBJECT {
 } WINDOW_OBJECT;
 
 bool movement(int input, int* y, int* x, WINDOW_OBJECT window_text,
-			  int* height);
+			  int* height, int lines);
 int count_char(char* file_name, int ref);
 char** read_from_file(char* file_name, int count_of_lines);
 int max(int a, int b);

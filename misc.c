@@ -1,7 +1,7 @@
 #include "texteditor.h"
 
-bool movement(int input, int* y, int* x, WINDOW_OBJECT window_text,
-			  int* height) {
+bool movement(int input, int* y, int* x, WINDOW_OBJECT window_text, int* height,
+			  int lines) {
 	if (input == 65) *y -= 1;
 	if (input == 66) *y += 1;
 	if (input == 67) *x += 1;
@@ -23,6 +23,12 @@ bool movement(int input, int* y, int* x, WINDOW_OBJECT window_text,
 		}
 
 		return true;
+	}
+
+	if (*y > lines) {
+		*y = lines;
+
+		return false;
 	}
 
 	if (*y > window_text.height) {

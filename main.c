@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
 		}
 
 		if (movement(input_char, &cur_pos_y, &cur_pos_x, window_text,
-					 &screen_height)) {
+					 &screen_height, count_of_lines)) {
 			if (screen_height + cur_pos_y > count_of_lines) {
 				screen_height -= 1;
 				cur_pos_x = strlen(file_content[count_of_lines - 1] - 1);
@@ -58,8 +58,8 @@ int main(int argc, char** argv) {
 			}
 		}
 
-		cur_pos_x =
-			min(cur_pos_x, strlen(file_content[cur_pos_y + screen_height]) - 1);
+		// cur_pos_x =
+		// 	min(cur_pos_x, strlen(file_content[cur_pos_y + screen_height]) - 1);
 
 		// FIX TABS IN STRLEN
 

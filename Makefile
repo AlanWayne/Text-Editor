@@ -1,8 +1,8 @@
+TITLE = mte
 CC = gcc
 FLAGS = -Wall -Wextra -Werror
 LIBS = -lm -lncurses
 FILES = main.c misc.c
-TITLE = result
 
 all: clang_format $(TITLE)
 
