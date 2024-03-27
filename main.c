@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
 	int input_char = ' ';
 	int cur_pos_y = min(count_of_lines - 1, window_text.height - 1);
 	int cur_pos_x = strlen(file_content[cur_pos_y]);
-	int screen_height = max(count_of_lines - window_text.height, 0);
+	int screen_height = max(count_of_lines - window_text.height - 1, 0);
 
 	// --- [ first draw ] ---
 
@@ -50,6 +50,8 @@ int main(int argc, char** argv) {
 	while (input_char = wgetch(window_text.window)) {
 		// --- [ read system keys ] ---
 
+		bool redraw = false;
+
 		if (input_char == 27) {
 			input_char = wgetch(window_text.window);
 
@@ -57,9 +59,13 @@ int main(int argc, char** argv) {
 				// --- [ arrow movement ] ---
 
 				input_char = wgetch(window_text.window);
-				if (movement(input_char, &cur_pos_y, &cur_pos_x, window_text,
-							 &screen_height, count_of_lines, count_of_chars)) {
-					if (screen_height + cur_pos_y > count_of_lines) {
+
+				redraw =
+					movement(input_char, &cur_pos_y, &cur_pos_x, window_text,
+							 &screen_height, count_of_lines, count_of_chars);
+
+				if (redraw) {
+					if (screen_height + cur_pos_y >= count_of_lines) {
 						screen_height -= 1;
 						cur_pos_x = count_of_chars[cur_pos_y + screen_height];
 					}
@@ -69,26 +75,52 @@ int main(int argc, char** argv) {
 
 				break;
 			}
+		} else if (input_char == 127) {
+			// ---- [ backspace ] ----
+
+			int cursor = cur_pos_y + screen_height;
+			delete_from_string(file_content[cursor], cur_pos_x - 1);
+
+			bool delete_raw = (cur_pos_x == 0);
+
+			movement(K_LEFT, &cur_pos_y, &cur_pos_x, window_text,
+					 &screen_height, count_of_lines, count_of_chars);
+			count_of_chars[cursor] -= 1;
+			if (count_of_chars < 0) count_of_chars = 0;
+
+			if (delete_raw) {
+				delete_line(file_content, count_of_chars, cursor,
+							count_of_lines);
+				count_of_lines -= 1;
+			}
+
+			redraw = true;
 		} else {
-			// --- [ type regular symbols ] ---
+			// --- [ read regular symbols ] ---
 
 			int cursor = cur_pos_y + screen_height;
 			add_to_string(file_content[cursor], input_char, cur_pos_x);
 			count_of_chars[cursor] += 1;
+
+			movement(K_RIGHT, &cur_pos_y, &cur_pos_x, window_text,
+					 &screen_height, count_of_lines, count_of_chars);
+			redraw = true;
 		}
 		// --- [ loop draw ] ---
 
-		wclear(window_text.window);
-		for (int i = screen_height, k = 0; i < count_of_lines; ++i, ++k) {
-			mvwprintw(window_text.window, k, 0, "%s", file_content[i]);
-			wrefresh(window_text.window);
+		if (redraw) {
+			wclear(window_text.window);
+			for (int i = screen_height, k = 0; i < count_of_lines; ++i, ++k) {
+				mvwprintw(window_text.window, k, 0, "%s", file_content[i]);
+			}
 		}
 
 		// --- [ move cursor ] --
 
 		wmove(window_text.window, cur_pos_y,
 			  min(cur_pos_x, count_of_chars[cur_pos_y + screen_height]));
-		// wrefresh(window_text_border.window);
+
+		wrefresh(window_text.window);
 	}
 
 	// ------------------------[ exit ]------------------------

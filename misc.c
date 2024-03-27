@@ -1,10 +1,5 @@
 #include "texteditor.h"
 
-#define K_UP 65
-#define K_DOWN 66
-#define K_RIGHT 67
-#define K_LEFT 68
-
 bool movement(int input, int* y, int* x, WINDOW_OBJECT window_text, int* height,
 			  int lines, int* chars) {
 	if (*x > chars[*y + *height] && (input == K_RIGHT || input == K_LEFT)) {
@@ -22,7 +17,7 @@ bool movement(int input, int* y, int* x, WINDOW_OBJECT window_text, int* height,
 	}
 
 	if (*x > chars[*y + *height] && input == K_RIGHT) {
-		if (*y + *height < lines) {
+		if (*y + *height <= lines) {
 			*x = 0;
 			*y += 1;
 		} else {
@@ -59,76 +54,88 @@ bool movement(int input, int* y, int* x, WINDOW_OBJECT window_text, int* height,
 }
 
 int count_char(char* file_name, int ref) {
-	FILE* file = fopen(file_name, "r");
 	int count_of_lines = 1;
-	int ch = ' ';
 
-	while ((ch = fgetc(file)) != EOF) {
-		count_of_lines += (ch == ref);
+	FILE* file = fopen(file_name, "r");
+	if (file != NULL) {
+		int ch = ' ';
+
+		while ((ch = fgetc(file)) != EOF) {
+			count_of_lines += (ch == ref);
+		}
+
+		fclose(file);
 	}
-
-	fclose(file);
 
 	return count_of_lines;
 }
 
 int* count_chars(char* file_name, int lines) {
+	int* count_of_chars;
 	FILE* file = fopen(file_name, "r");
-	int* count_of_chars = (int*)calloc(lines, sizeof(int));
-	int ch = ' ';
-	int i = 0;
 
-	while ((ch = fgetc(file)) != EOF) {
-		if (ch != '\n') {
-			count_of_chars[i] += 1;
+	if (file != NULL) {
+		count_of_chars = (int*)calloc(lines, sizeof(int));
+		int ch = ' ';
+		int i = 0;
 
-			if (ch == 9) {
-				count_of_chars[i] += 7;
+		while ((ch = fgetc(file)) != EOF) {
+			if (ch != '\n') {
+				count_of_chars[i] += 1;
+
+				if (ch == 9) {
+					count_of_chars[i] += 3;
+				}
+			} else {
+				i += 1;
 			}
-		} else {
-			i += 1;
 		}
-	}
 
-	fclose(file);
+		fclose(file);
+	} else {
+		count_of_chars = (int*)calloc(1, sizeof(int));
+		count_of_chars[0] = 0;
+	}
 
 	return count_of_chars;
 }
 
 char** read_from_file(char* file_name, int count_of_lines) {
-	FILE* file = fopen(file_name, "r");
-	char buffer[1024];
-
 	char** file_content = (char**)malloc(count_of_lines * sizeof(char*));
 	for (int i = 0; i < count_of_lines; ++i) {
 		file_content[i] = (char*)malloc(1024 * sizeof(char));
 	}
 
-	int i = 0;
-	int k = 0;
-	int input = ' ';
-	while (input = fgetc(file)) {
-		if (input == '\n') {
-			file_content[i][k] = '\0';
-			++i;
-			k = 0;
-		} else if (input == '\t') {
-			for (int j = 0; j < 4; ++j) {
-				file_content[i][k] = ' ';
+	FILE* file = fopen(file_name, "r");
+	if (file != NULL) {
+		char buffer[1024];
+
+		int i = 0;
+		int k = 0;
+		int input = ' ';
+		while (input = fgetc(file)) {
+			if (input == '\n') {
+				file_content[i][k] = '\0';
+				++i;
+				k = 0;
+			} else if (input == '\t') {
+				for (int j = 0; j < 4; ++j) {
+					file_content[i][k] = ' ';
+					++k;
+				}
+			} else if (input == EOF) {
+				file_content[i][k] = '\0';
+				break;
+			} else {
+				file_content[i][k] = input;
 				++k;
 			}
-		} else if (input == EOF) {
-			file_content[i][k] = '\0';
-			break;
-		} else {
-			file_content[i][k] = input;
-			++k;
 		}
+
+		fclose(file);
+	} else {
+		file_content[0][0] = '\0';
 	}
-
-	// file_content[i][k] = '\0';
-
-	fclose(file);
 
 	return file_content;
 }
@@ -151,4 +158,25 @@ void add_to_string(char* str, char ch, int pos) {
 	}
 
 	str[pos] = ch;
+}
+
+void delete_from_string(char* str, int pos) {
+	size_t size = strlen(str) + 1;
+
+	for (int i = pos; i < size; ++i) {
+		str[i] = str[i + 1];
+	}
+}
+
+void delete_line(char** text, int* chars, int y, int lines) {
+	strcat(text[y - 1], text[y]);
+
+	free(text[y]);
+
+	for (int i = y; i < lines - 1; ++i) {
+		text[i] = text[i + 1];
+		chars[i] = chars[i + 1];
+	}
+
+	// text = (char**)realloc(text, (lines - 1) * sizeof(char*));
 }
