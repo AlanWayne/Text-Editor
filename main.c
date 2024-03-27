@@ -38,29 +38,33 @@ int main(int argc, char** argv) {
 	}
 
 	while (input_char = wgetch(window_text.window)) {
+		// system key
 		if (input_char == 27) {
 			input_char = wgetch(window_text.window);
-			if (input_char == 27) {
+
+			if (input_char == 91) {
+				// movement
+				input_char = wgetch(window_text.window);
+				if (movement(input_char, &cur_pos_y, &cur_pos_x, window_text,
+							 &screen_height, count_of_lines, count_of_chars)) {
+					if (screen_height + cur_pos_y > count_of_lines) {
+						screen_height -= 1;
+						cur_pos_x = count_of_chars[cur_pos_y + screen_height];
+					}
+
+					wclear(window_text.window);
+					for (int i = screen_height, k = 0; i < count_of_lines;
+						 ++i, ++k) {
+						mvwprintw(window_text.window, k, 0, "%s",
+								  file_content[i]);
+						wrefresh(window_text.window);
+					}
+				}
+			} else {
+				// escape
 				break;
 			}
 		}
-
-		if (movement(input_char, &cur_pos_y, &cur_pos_x, window_text,
-					 &screen_height, count_of_lines, count_of_chars)) {
-			if (screen_height + cur_pos_y > count_of_lines) {
-				screen_height -= 1;
-				cur_pos_x = count_of_chars[cur_pos_y + screen_height];
-			}
-
-			wclear(window_text.window);
-			for (int i = screen_height, k = 0; i < count_of_lines; ++i, ++k) {
-				mvwprintw(window_text.window, k, 0, "%s", file_content[i]);
-				wrefresh(window_text.window);
-			}
-		}
-
-		// cur_pos_x = min(cur_pos_x, count_of_chars[cur_pos_y +
-		// screen_height]);
 
 		wmove(window_text.window, cur_pos_y,
 			  min(cur_pos_x, count_of_chars[cur_pos_y + screen_height]));
