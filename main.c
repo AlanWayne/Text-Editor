@@ -3,9 +3,13 @@
 int main(int argc, char** argv) {
 	if (argc < 2) return 1;
 
+	// ------------------------[ INIT ]------------------------
+
 	initscr();
 	noecho();
 	refresh();
+
+	// --- [ windows ] ---
 
 	WINDOW_OBJECT window_main = {stdscr, getmaxy(stdscr), getmaxx(stdscr)};
 
@@ -19,9 +23,7 @@ int main(int argc, char** argv) {
 		window_text.height = getmaxy(window_text.window) - 1,
 		window_text.width = getmaxx(window_text.window) - 1};
 
-	box(window_text_border.window, 0, 0);
-	mvwprintw(window_text_border.window, 0, 2, " [ %s ] ", argv[1]);
-	wrefresh(window_text_border.window);
+	// --- [ read file ] ---
 
 	int count_of_lines = count_char(argv[1], '\n');
 	int* count_of_chars = count_chars(argv[1], count_of_lines);
@@ -32,18 +34,28 @@ int main(int argc, char** argv) {
 	int cur_pos_x = strlen(file_content[cur_pos_y]);
 	int screen_height = max(count_of_lines - window_text.height, 0);
 
+	// --- [ first draw ] ---
+
+	box(window_text_border.window, 0, 0);
+	mvwprintw(window_text_border.window, 0, 2, " [ %s ] ", argv[1]);
+	wrefresh(window_text_border.window);
+
 	for (int i = screen_height, k = 0; i < count_of_lines; ++i, ++k) {
 		mvwprintw(window_text.window, k, 0, "%s", file_content[i]);
 		wrefresh(window_text.window);
 	}
 
+	// ------------------------[ loop ]------------------------
+
 	while (input_char = wgetch(window_text.window)) {
-		// system key
+		// --- [ read system keys ] ---
+
 		if (input_char == 27) {
 			input_char = wgetch(window_text.window);
 
 			if (input_char == 91) {
-				// movement
+				// --- [ arrow movement ] ---
+
 				input_char = wgetch(window_text.window);
 				if (movement(input_char, &cur_pos_y, &cur_pos_x, window_text,
 							 &screen_height, count_of_lines, count_of_chars)) {
@@ -51,38 +63,50 @@ int main(int argc, char** argv) {
 						screen_height -= 1;
 						cur_pos_x = count_of_chars[cur_pos_y + screen_height];
 					}
-
-					wclear(window_text.window);
-					for (int i = screen_height, k = 0; i < count_of_lines;
-						 ++i, ++k) {
-						mvwprintw(window_text.window, k, 0, "%s",
-								  file_content[i]);
-						wrefresh(window_text.window);
-					}
 				}
 			} else {
-				// escape
+				// --- [ escape key ] ---
+
 				break;
 			}
+		} else {
+			// --- [ type regular symbols ] ---
+
+			int cursor = cur_pos_y + screen_height;
+			add_to_string(file_content[cursor], input_char, cur_pos_x);
+			count_of_chars[cursor] += 1;
 		}
+		// --- [ loop draw ] ---
+
+		wclear(window_text.window);
+		for (int i = screen_height, k = 0; i < count_of_lines; ++i, ++k) {
+			mvwprintw(window_text.window, k, 0, "%s", file_content[i]);
+			wrefresh(window_text.window);
+		}
+
+		// --- [ move cursor ] --
 
 		wmove(window_text.window, cur_pos_y,
 			  min(cur_pos_x, count_of_chars[cur_pos_y + screen_height]));
-		wrefresh(window_text_border.window);
+		// wrefresh(window_text_border.window);
 	}
+
+	// ------------------------[ exit ]------------------------
+
+	// --- [ delete windows ] --
 
 	delwin(window_text.window);
 	delwin(window_text_border.window);
 	endwin();
 
+	// --- [ free memory ] --
+
 	for (int i = 0; i < count_of_lines; ++i) {
+		printf("%s\n", file_content[i]);
 		free(file_content[i]);
 	}
 	free(file_content);
 	free(count_of_chars);
-
-	printf("%d %d %d %d\n", screen_height, count_of_lines - window_text.height,
-		   count_of_lines, window_text.height);
 
 	return 0;
 }

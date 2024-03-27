@@ -105,10 +105,28 @@ char** read_from_file(char* file_name, int count_of_lines) {
 	}
 
 	int i = 0;
-	while (fgets(buffer, 1024, file) != NULL) {
-		strcpy(file_content[i], buffer);
-		++i;
+	int k = 0;
+	int input = ' ';
+	while (input = fgetc(file)) {
+		if (input == '\n') {
+			file_content[i][k] = '\0';
+			++i;
+			k = 0;
+		} else if (input == '\t') {
+			for (int j = 0; j < 4; ++j) {
+				file_content[i][k] = ' ';
+				++k;
+			}
+		} else if (input == EOF) {
+			file_content[i][k] = '\0';
+			break;
+		} else {
+			file_content[i][k] = input;
+			++k;
+		}
 	}
+
+	// file_content[i][k] = '\0';
 
 	fclose(file);
 
@@ -123,4 +141,14 @@ int max(int a, int b) {
 int min(int a, int b) {
 	if (a < b) return a;
 	return b;
+}
+
+void add_to_string(char* str, char ch, int pos) {
+	size_t size = strlen(str) + 2;
+
+	for (int i = size - 1; i >= pos; --i) {
+		str[i] = str[i - 1];
+	}
+
+	str[pos] = ch;
 }
